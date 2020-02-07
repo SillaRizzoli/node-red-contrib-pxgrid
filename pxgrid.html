@@ -21,7 +21,7 @@
         category: 'input',
         defaults: {
             name: {value:""},
-            pxgridconf: {value:"", type:"pxgridconf",required:true}
+            pxgridconf: {value:"", type:"pxgridconf", required:true}
         },
         color:"#0091FF",
         inputs:0,
@@ -81,9 +81,11 @@
         <label for="node-config-input-clientname"><i class="fa fa-bookmark"></i> Client Name</label>
         <input class="input-append-left" type="text" id="node-config-input-clientname" placeholder="Client Name" style="width: 45%;" >
     </div>
-    <div class="form-row">
+    <div class="form-row node-config-input-tls">
         <div id="node-config-row-tls">
-            <label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-config-input-tls">TLS Configuration</label><input style="width: 300px;" type="text" id="node-config-input-tls">
+            <label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-config-input-tls">TLS Configuration</label>
+            <span data-i18n="pxgridconf.label.tls-config"></span>
+            <input style="width: 300px;" type="text" id="node-config-input-tls">
         </div>
     </div>
     <div class="form-row node-config-input-name>
@@ -98,12 +100,12 @@
         defaults: {
             pxgridserver: {required:true},
             clientname: {required:true},
-            tls: {type:"tls-config", required: true},
+            tls: {type:"tls-config", required:true},
             name: {required:false}
         },
         label: function() {
             return (this.name?this.name:this.server);
-        },/*
+        }/*,
         oneditprepare: function () {
             if (typeof this.usetls === 'undefined') {
                 this.usetls = false;
@@ -120,9 +122,9 @@
             $("#node-config-input-usetls").on("click",function() {
                 updateTLSOptions();
             });
-        },*/
+        },
         oneditsave: function() {
                 $("#node-config-input-tls").val("");
-        }
+        }*/
     });
 </script>
