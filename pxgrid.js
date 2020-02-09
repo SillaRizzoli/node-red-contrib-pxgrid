@@ -35,6 +35,24 @@ module.exports = function(RED) {
                     this.stompSession = session;
                     node.connected = true;
                     node.connecting = false;
+                    node.stompSession.onConnect = () => {
+                        var allPxNodes = Object.values(node.users);
+                        for (var onePxNode of allPxNodes) {
+                            onePxNode.emit("connected");
+                        }
+                    };
+                    node.stompSession.onWebSocketClose = () => {
+                        var allPxNodes = Object.values(node.users);
+                        for (var onePxNode of allPxNodes) {
+                            onePxNode.emit("disconnected");
+                        }
+                    };
+                    node.stompSession.onStompError = () => {
+                        var allPxNodes = Object.values(node.users);
+                        for (var onePxNode of allPxNodes) {
+                            onePxNode.emit("disconnected");
+                        }
+                    };
                     goToSubCallback();
                 });
             }
@@ -83,21 +101,21 @@ module.exports = function(RED) {
 
     function PxgridSessionFeedNode(n) {
         RED.nodes.createNode(this,n);
-        var pxClient = RED.nodes.getNode(n.pxgridconf);
+        this.pxClient = RED.nodes.getNode(n.pxgridconf);
         var node = this;
-            if (pxClient) {
-                pxClient.register(node);
+            if (this.pxClient) {
+                this.pxClient.register(node);
             }
 
         node.on("close", function() {
-            if (pxClient) {
-                pxClient.deregister(node);
+            if (this.pxClient) {
+                this.pxClient.deregister(node);
             }
         });
         node.on("connected", function() {
             node.status({fill:"green",shape:"dot",text:"connected"});
-            if (pxClient) {
-                  pxClient.subscribe(this, function(message) {
+            if (this.pxClient) {
+                this.pxClient.subscribe(this, function(message) {
                       var newmsg={};
                       try {
                           newmsg.payload = JSON.parse(message.body);
@@ -120,21 +138,21 @@ module.exports = function(RED) {
 
     function PxgridRadiusFailuresNode(n) {
         RED.nodes.createNode(this,n);
-        var pxClient = RED.nodes.getNode(n.pxgridconf);
+        this.pxClient = RED.nodes.getNode(n.pxgridconf);
         var node = this;
-            if (pxClient) {
-                pxClient.register(node);
+            if (this.pxClient) {
+                this.pxClient.register(node);
             }
 
         node.on("close", function() {
-            if (pxClient) {
-                pxClient.deregister(node);
+            if (this.pxClient) {
+                this.pxClient.deregister(node);
             }
         });
         node.on("connected", function() {
             node.status({fill:"green",shape:"dot",text:"connected"});
-            if (pxClient) {
-                  pxClient.subscribe(this, function(message) {
+            if (this.pxClient) {
+                this.pxClient.subscribe(this, function(message) {
                       var newmsg={};
                       try {
                           newmsg.payload = JSON.parse(message.body);
@@ -153,4 +171,69 @@ module.exports = function(RED) {
         });
     }
     RED.nodes.registerType("pxgrid-radius-failures",PxgridRadiusFailuresNode);
+
+    function PxgridRestNode(n) {
+        RED.nodes.createNode(this,n);
+        this.pxClient = RED.nodes.getNode(n.pxgridconf);
+        this.call = n.call;
+        var node = this;
+
+            if (this.pxClient) {
+                this.pxClient.register(node);
+            }
+        node.on("close", function() {
+            if (this.pxClient) {
+                this.pxClient.deregister(node);
+            }
+        });
+        node.on("connected", function() {
+            node.status({fill:"green",shape:"dot",text:"connected"});
+        });
+        node.on("input",function(msg,send,done) {
+            if (msg.hasOwnProperty("payload")) {
+                if (this.call == "getSessions") {
+                    this.pxClient.pxgridClient.getSessions().then(sessions => {
+                        var newmsg = {};
+                        newmsg.payload= sessions;
+                        node.send(newmsg);
+                        done();
+                    });
+                } else if (this.call == "getRadiusFailures") {
+                    this.pxClient.pxgridClient.getRadiusFailures().then(sessions => {
+                        var newmsg = {};
+                        newmsg.payload= sessions;
+                        node.send(newmsg);
+                        done();
+                    });                    
+                } else if (this.call == "getSystemHealth") {
+                    this.pxClient.pxgridClient.getSystemHealth().then(sessions => {
+                        var newmsg = {};
+                        newmsg.payload= sessions;
+                        node.send(newmsg);
+                        done();
+                    });                    
+                } else if (this.call == "getSystemPerformance") {
+                    this.pxClient.pxgridClient.getSystemPerformance().then(sessions => {
+                        var newmsg = {};
+                        newmsg.payload= sessions;
+                        node.send(newmsg);
+                        done();
+                    });
+                } else if (this.call == "getSxpBindings") {
+                    this.pxClient.pxgridClient.getSxpBindings().then(sessions => {
+                        var newmsg = {};
+                        newmsg.payload= sessions;
+                        node.send(newmsg);
+                        done();
+                    });
+                }
+            } else {
+                done();
+            }
+        });
+        node.on("disconnected", function() {
+            node.status({fill:"grey",shape:"dot",text:"disconnected"});
+        });
+    }
+    RED.nodes.registerType("pxgrid-rest",PxgridRestNode);
 }
