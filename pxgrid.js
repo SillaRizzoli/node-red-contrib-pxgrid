@@ -62,13 +62,15 @@ module.exports = function(RED) {
             node.users[sessionNode.id] = sessionNode;
             if (Object.keys(node.users).length === 1) {
                 node.connect(() => {
+                    console.log("Connected!")
+/*
                     var allPxNodes = Object.values(node.users);
                     for (var onePxNode of allPxNodes) {
                         onePxNode.emit("connected");
-                    }
-                });
+                    } */
+                }); /*
             } else {
-                sessionNode.emit("connected");
+                sessionNode.emit("connected"); */
             }
         };
 
@@ -88,7 +90,7 @@ module.exports = function(RED) {
 
         this.on("close",function() {
             console.log("Cleaning up....");
-            if (node.connected) {
+            if (this.connected) {
                 this.pxgridClient.disconnect(this.stompSession);
             }
             node.connecting = false;
@@ -103,9 +105,12 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,n);
         this.pxClient = RED.nodes.getNode(n.pxgridconf);
         var node = this;
-            if (this.pxClient) {
-                this.pxClient.register(node);
-            }
+
+        node.subscribed = false;
+        node.status({fill:"grey",shape:"dot",text:"disconnected"});
+        if (this.pxClient) {
+            this.pxClient.register(node);
+        }
 
         node.on("close", function() {
             if (this.pxClient) {
@@ -114,7 +119,8 @@ module.exports = function(RED) {
         });
         node.on("connected", function() {
             node.status({fill:"green",shape:"dot",text:"connected"});
-            if (this.pxClient) {
+            if (this.pxClient && !node.subscribed) {
+                node.subscribed = true;
                 this.pxClient.subscribe(this, function(message) {
                       var newmsg={};
                       try {
@@ -140,10 +146,12 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,n);
         this.pxClient = RED.nodes.getNode(n.pxgridconf);
         var node = this;
-            if (this.pxClient) {
-                this.pxClient.register(node);
-            }
 
+        node.subscribed = false;
+        node.status({fill:"grey",shape:"dot",text:"disconnected"});
+        if (this.pxClient) {
+            this.pxClient.register(node);
+        }
         node.on("close", function() {
             if (this.pxClient) {
                 this.pxClient.deregister(node);
@@ -151,7 +159,8 @@ module.exports = function(RED) {
         });
         node.on("connected", function() {
             node.status({fill:"green",shape:"dot",text:"connected"});
-            if (this.pxClient) {
+            if (this.pxClient && !node.subscribed) {
+                node.subscribed = true;
                 this.pxClient.subscribe(this, function(message) {
                       var newmsg={};
                       try {
@@ -178,9 +187,10 @@ module.exports = function(RED) {
         this.call = n.call;
         var node = this;
 
-            if (this.pxClient) {
-                this.pxClient.register(node);
-            }
+        node.status({fill:"grey",shape:"dot",text:"disconnected"});
+        if (this.pxClient) {
+            this.pxClient.register(node);
+        }
         node.on("close", function() {
             if (this.pxClient) {
                 this.pxClient.deregister(node);
