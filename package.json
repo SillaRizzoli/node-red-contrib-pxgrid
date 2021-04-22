@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "description": "A Node-RED node to publish and subscribe to/from a Cisco pxGrid server",
     "dependencies": {
-        "node-pxgrid": "^1.2.0"
+        "node-pxgrid": "^1.3.0"
     },
     "repository": {
         "type": "git",
